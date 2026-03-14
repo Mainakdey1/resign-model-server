@@ -1,3 +1,0 @@
-uvicorn
-fastAPI
-pydantic-settings

@@ -22,6 +22,12 @@ def health():
 def base():
     return {'message': 'hello world'}
 
+@app.get("/sum")
+def calculate_sum(a: int, b: int):
+    return {
+        "sum": a + b
+    }
+
 if __name__ == "__main__":
     try:
         uvicorn.run("main:app", 

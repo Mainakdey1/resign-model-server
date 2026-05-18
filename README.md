@@ -37,6 +37,7 @@ Create a `.env` file in the project root or set environment variables before run
 HOST=127.0.0.1
 PORT=3000
 DEBUG=True
+DATABASE_URL=your nosql database url here
 ```
 
 ## Run locally

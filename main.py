@@ -1,6 +1,8 @@
 import uvicorn
 from fastapi import FastAPI
-import os
+
+from src.services.database_query import get_env
+from src.services.data_retrieval_hashenv import env_recieve
 from src.core.config import settings
 app = FastAPI()
 
@@ -27,6 +29,11 @@ def calculate_sum(a: int, b: int):
     return {
         "sum": a + b
     }
+
+@app.get('/env/{repository_name}')
+def get_env_endpoint(repository_name: str):
+    env_data = get_env(repository_name)
+    return env_data
 
 if __name__ == "__main__":
     try:

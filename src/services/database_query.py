@@ -1,36 +1,33 @@
-from fastapi import FastAPI
-from dotenv import load_dotenv
-import psycopg2
-
+from psycopg2.pool import SimpleConnectionPool
 from src.core.config import settings
 
-load_dotenv()
-
-DATABASE_URL = settings.DATABASE_URL
-print(DATABASE_URL)
-
-conn = psycopg2.connect(DATABASE_URL)
-cursor = conn.cursor()
-
-app = FastAPI()
+pool = SimpleConnectionPool(
+    minconn=1,
+    maxconn=50,
+    dsn=settings.DATABASE_URL
+)
 
 def get_env(repository_name: str):
-    cursor.execute("""
-    SELECT current_database();
-    """)
 
-    print(cursor.fetchall())
-    cursor.execute("""
-        SELECT env_key, env_value
-        FROM test_envs
-        WHERE project_name = %s
-    """, (repository_name,))
+    conn = pool.getconn()
 
-    rows = cursor.fetchall()
+    try:
+        with conn.cursor() as cursor:
 
-    envs = {}
+            cursor.execute("""
+                SELECT env_key, env_value
+                FROM test_envs
+                WHERE project_name = %s
+            """, (repository_name,))
 
-    for key, value in rows:
-        envs[key] = value
+            rows = cursor.fetchall()
 
-    return envs
+            envs = {}
+
+            for key, value in rows:
+                envs[key] = value
+
+            return envs
+
+    finally:
+        pool.putconn(conn)

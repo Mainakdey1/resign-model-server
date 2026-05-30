@@ -1,9 +1,16 @@
 import uvicorn
 from fastapi import FastAPI
+from pydantic import BaseModel
+from typing import Dict
 
 from src.services.database_query import get_env
 from src.services.data_retrieval_hashenv import env_recieve
 from src.core.config import settings
+from src.services.add_new_env_to_db_service import add_new_env_to_db
+
+class EnvData(BaseModel):
+    repository_name: str
+    envs: Dict[str, str]
 app = FastAPI()
 
 #Root endpoint
@@ -24,11 +31,16 @@ def health():
 def base():
     return {'message': 'hello world'}
 
-@app.get("/sum")
-def calculate_sum(a: int, b: int):
-    return {
-        "sum": a + b
-    }
+@app.post('/env-recieve')
+def env_recieve(data: EnvData
+             ):
+    try:
+        add_new_env_to_db(data.repository_name, data.envs)
+        return {'message': 'Environment variables recieved and stored successfully'}
+    except Exception as e:
+        return {'message': f'An error occurred: {str(e)}'}
+
+
 
 @app.get('/env/{repository_name}')
 def get_env_endpoint(repository_name: str):

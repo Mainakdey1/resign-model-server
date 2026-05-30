@@ -1,51 +1,10 @@
-from psycopg2.pool import SimpleConnectionPool
 from psycopg2 import OperationalError, InterfaceError
-
-
-from src.core.config import settings
-
-pool = SimpleConnectionPool(
-    minconn=1,
-    maxconn=50,
-    dsn=settings.DATABASE_URL
-)
-
-def get_connection():
-
-    conn = pool.getconn()
-
-    try:
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT 1")
-
-        return conn
-
-    except (OperationalError, InterfaceError):
-
-        pool.putconn(conn, close=True)
-        conn = pool.getconn()
-        with conn.cursor() as cursor:
-            cursor.execute("SELECT 1")
-
-        return conn
-
-
+from ..services.db_connection_service import get_connection, release_connection
 
 def get_env(repository_name: str):
 
     conn =  get_connection()
-    discard = False
-
-    if conn.closed:
-        pool.putconn(conn, close=True)
-        conn = pool.getconn()
     try:
-        try: 
-            with conn.cursor() as cursor:
-                cursor.execute("SELECT 1")
-        except (OperationalError, InterfaceError):
-            discard = True
-            raise
         with conn.cursor() as cursor:
 
             cursor.execute("""
@@ -56,14 +15,12 @@ def get_env(repository_name: str):
 
             rows = cursor.fetchall()
 
-            envs = {}
-
-            for key, value in rows:
-                envs[key] = value
-
-            return envs
+            return {
+                key: value
+                for key, value in rows
+            }
     except (OperationalError, InterfaceError):
         discard = True
         raise
     finally:
-        pool.putconn(conn, close=discard)
+        release_connection(conn, discard=discard)

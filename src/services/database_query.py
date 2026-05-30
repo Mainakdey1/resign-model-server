@@ -2,7 +2,7 @@ from psycopg2 import OperationalError, InterfaceError
 from ..services.db_connection_service import get_connection, release_connection
 
 def get_env(repository_name: str):
-
+    discard = False
     conn =  get_connection()
     try:
         with conn.cursor() as cursor:

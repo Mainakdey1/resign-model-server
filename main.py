@@ -2,11 +2,13 @@ import uvicorn
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import Dict
+from fastapi import Depends
 
 from src.services.database_query import get_env
 from src.services.data_retrieval_hashenv import env_recieve
 from src.core.config import settings
 from src.services.add_new_env_to_db_service import add_new_env_to_db
+from src.services.authentication.authentication_service import authenticate
 
 class EnvData(BaseModel):
     repository_name: str
@@ -15,7 +17,9 @@ app = FastAPI()
 
 #Root endpoint
 @app.get('/')
-def root():
+def root(
+    authenticated: bool = Depends(authenticate)
+):
     return {
         'message': settings.PROJECT_NAME,
         'version': settings.API_STR,
@@ -24,8 +28,11 @@ def root():
 
     }
 @app.get('/health')
-def health():
+def health(
+    authenticated: bool=Depends(authenticate)
+):
     return {'status': 'ok'}
+
 
 @app.post('/base')
 def base():
